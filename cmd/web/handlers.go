@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"text/template"
 )
 
 // homeHandler is the handler for "/" URL pattern
@@ -15,7 +17,31 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("Hello from snippet box"))
+	// Initialize a slice containing the paths to the two files. Note that the
+	// home.page.tmpl file must be the *first* file in the slice.
+	files := []string{
+		"./ui/html/home.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
+	}
+
+	// Use the template.ParseFiles() function to read the template files into a
+	// template set
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+
+	// We then use Execute() method on the template set to write the template
+	// content as the response body. The last parameter to Execute() represents any
+	// dynamic data that we want to pass in, which for now we'll leave as nil.
+	err = ts.Execute(w, nil)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", 500)
+	}
 }
 
 // showSnippetHandler is the handler for "/snippet" URL pattern
