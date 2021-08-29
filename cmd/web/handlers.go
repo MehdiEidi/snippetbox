@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"strconv"
 )
 
 // homeHandler is the handler for "/" URL pattern
@@ -19,7 +20,15 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 // showSnippetHandler is the handler for "/snippet" URL pattern
 func showSnippetHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display a specific snippet"))
+	// Getting the id value from query string. Also converting it to int to see if id is actually int and later
+	// check if it is a positive number
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+
+	fmt.Fprintf(w, "Display snippet with ID:%d", id)
 }
 
 // createSnippetHandler is the handler for "/snippet/creat" URl pattern
@@ -28,20 +37,11 @@ func createSnippetHandler(w http.ResponseWriter, r *http.Request) {
 	// otherwise should return 405 header: method not allowed.
 	if r.Method != "POST" {
 		w.Header().Set("Allow", "POST") // Adding "Allow: POST" header to response header map. To show user which method is allowed
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte("Method not allowed"))
+
+		// This code below is equivalent to these two: w.WriteHeader(http.StatusMethodNotAllowed) then w.Write([]byte("Method not allowed"))
+		http.Error(w, "Method not allowed", 405)
 		return
 	}
 
 	w.Write([]byte("create a new snippet..."))
-}
-
-func main() {
-	mux := http.NewServeMux()                               // initialize a new servemux
-	mux.HandleFunc("/", homeHandler)                        // register homeHandler as the handler for "/" URL pattern
-	mux.HandleFunc("/snippet", showSnippetHandler)          // register showSnippetHandler as the handler for "/snippet" URL pattern
-	mux.HandleFunc("/snippet/create", createSnippetHandler) // register createSnippetHandler as the handler for "/snippet/create" URL pattern
-
-	log.Println("Starting server on :4000")
-	log.Fatal(http.ListenAndServe(":4000", mux)) // starting a web server, listening on :4000(TCP network address)
 }
