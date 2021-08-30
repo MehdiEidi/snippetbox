@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+
 	"github.com/MehdiEidi/snippetbox/pkg/models"
 )
 

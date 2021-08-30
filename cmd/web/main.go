@@ -3,10 +3,11 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"github.com/MehdiEidi/snippetbox/pkg/models/mysql"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/MehdiEidi/snippetbox/pkg/models/mysql"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -29,7 +30,6 @@ func main() {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
-
 	defer db.Close()
 
 	app := &application{

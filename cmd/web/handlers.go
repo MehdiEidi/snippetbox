@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/MehdiEidi/snippetbox/pkg/models"
 	"net/http"
 	"strconv"
+
+	"github.com/MehdiEidi/snippetbox/pkg/models"
 )
 
 func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +70,7 @@ func (app *application) createSnippetHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	title := "0 snailsss"
+	title := "0 snail"
 	content := "O snail\\nClimb Mount Fuji,\\nBut slowly, slowly!\\n\\n– Kobayashi Issa"
 	expires := "7"
 
