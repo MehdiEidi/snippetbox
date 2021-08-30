@@ -4,37 +4,40 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 )
 
-func main() {
-	// Define a new command-line flag with the name 'addr', a default value of ":4000"
-	// and some short help text explaining what the flag controls. The value of the
-	// flag will be stored in the addr variable at runtime.
-	addr := flag.String("addr", ":4000", "HTTP network address")
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
+}
 
-	// Importantly, we use the flag.Parse() function to parse the command-line flag.
-	// This reads in the command-line flag value and assigns it to the addr
-	// variable. You need to call this *before* you use the addr variable
-	// otherwise it will always contain the default value of ":4000". If any errors are
-	// encountered during parsing the application will be terminated.
+func main() {
+	addr := flag.String("addr", ":4000", "HTTP network address")
 	flag.Parse()
 
-	mux := http.NewServeMux()                               // initialize a new servemux
-	mux.HandleFunc("/", homeHandler)                        // register homeHandler as the handler for "/" URL pattern
-	mux.HandleFunc("/snippet", showSnippetHandler)          // register showSnippetHandler as the handler for "/snippet" URL pattern
-	mux.HandleFunc("/snippet/create", createSnippetHandler) // register createSnippetHandler as the handler for "/snippet/create" URL pattern
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// Create a file server which serves files out of the "./ui/static" directory
+	app := &application{
+		infoLog:  infoLog,
+		errorLog: errorLog,
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", app.homeHandler)
+	mux.HandleFunc("/snippet", app.showSnippetHandler)
+	mux.HandleFunc("/snippet/create", app.createSnippetHandler)
+
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
-
-	// Use the mux.Handle() function to register the file server as the handler for
-	// all URL paths that start with "/static/". For matching paths, we strip the
-	// "/static" prefix before the request reaches the file server.
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
-	// The value returned from the flag.String() function is a pointer to the flag
-	// value, not the value itself. So we need to dereference the pointer (i.e.
-	// prefix it with the * symbol) before using it.
-	log.Println("Starting server on", *addr)
-	log.Fatal(http.ListenAndServe(*addr, mux)) // starting a web server, listening on *addr(TCP network address)
+	srv := &http.Server{
+		Addr:     *addr,
+		ErrorLog: errorLog,
+		Handler:  mux,
+	}
+
+	infoLog.Println("Starting server on", *addr)
+	errorLog.Fatal(srv.ListenAndServe())
 }
