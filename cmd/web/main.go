@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -45,6 +46,7 @@ func main() {
 
 	session := sessions.New([]byte(*secret))
 	session.Lifetime = 12 * time.Hour
+	session.Secure = true
 
 	app := &application{
 		infoLog:       infoLog,
@@ -54,14 +56,20 @@ func main() {
 		session:       session,
 	}
 
+	tlsConfig := &tls.Config{
+		PreferServerCipherSuites: true,
+		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
 	srv := &http.Server{
-		Addr:     *addr,
-		ErrorLog: errorLog,
-		Handler:  app.routes(),
+		Addr:      *addr,
+		ErrorLog:  errorLog,
+		Handler:   app.routes(),
+		TLSConfig: tlsConfig,
 	}
 
 	infoLog.Println("Starting server on", *addr)
-	errorLog.Fatal(srv.ListenAndServe())
+	errorLog.Fatal(srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"))
 }
 
 func openDB(dsn string) (*sql.DB, error) {
